@@ -158,7 +158,7 @@ if CLIENT then
 		if not IsValid(unchangedEnt) or not IsPlayer(unchangedEnt) then return end
 
 		-- if a teammate is looking at the disguised player, tell them who they're disguising as
-		if EvilTeammate(ent) then
+		if unchangedEnt:HasDisguiserTarget() and EvilTeammate(ent) then
 			tData:AddDescriptionLine(
 				LANG.GetParamTranslation("identity_disguiser_targetid_teammate", disguiserTarget:Nick()),
 				COLOR_ORANGE
