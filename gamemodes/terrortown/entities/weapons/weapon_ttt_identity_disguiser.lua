@@ -114,8 +114,15 @@ if CLIENT then
 		self:AddHUDHelpLine("idisguise_help_rld", Key("+reload", "R"))
 	end
 
+	local function EvilTeammate(ply)
+		local client = LocalPlayer()
+		return (not client:IsInnocent()) and ply:IsInTeam(client)
+	end
+
 	local function ModifyTarget(oldPly)
 		if not oldPly:IsPlayer() or not oldPly:HasDisguiserTarget() then return end
+
+		if EvilTeammate(oldPly) then return end
 
 		return oldPly:GetDisguiserTarget()
 	end
@@ -125,6 +132,8 @@ if CLIENT then
 
 	hook.Add("TTT2ModifyOverheadIcon", "ModifyDisguiserOHI", function(ply, shouldDrawDefault)
 		if not ply:IsPlayer() or not ply:HasDisguiserTarget() then return end
+
+		if EvilTeammate(ply) then return end
 
 		local client = LocalPlayer()
 		local target = ply:GetDisguiserTarget()
@@ -141,11 +150,21 @@ if CLIENT then
 	hook.Add("TTTRenderEntityInfo", "ttt2_identity_disguiser_update_data", function(tData)
 		local unchangedEnt = tData:GetUnchangedEntity()
 		local ent = tData:GetEntity()
+		local disguiserTarget = unchangedEnt:GetDisguiserTarget()
 
 		-- has to be a player
 		if not IsPlayer(ent) then return end
 
-		if not IsValid(unchangedEnt) or not IsPlayer(unchangedEnt) or unchangedEnt:GetDisguiserTarget() ~= ent then return end
+		if not IsValid(unchangedEnt) or not IsPlayer(unchangedEnt) then return end
+
+		-- if a teammate is looking at the disguised player, tell them who they're disguising as
+		if EvilTeammate(ent) then
+			tData:AddDescriptionLine(
+				LANG.GetParamTranslation("identity_disguiser_targetid_teammate", disguiserTarget:Nick()),
+				COLOR_ORANGE
+			)
+
+		if disguiserTarget ~= ent then return end
 
 		-- add title and subtitle to the focused ent
 		local h_string, h_color = util.HealthToString(unchangedEnt:Health(), unchangedEnt:GetMaxHealth())
