@@ -150,25 +150,28 @@ if CLIENT then
 	hook.Add("TTTRenderEntityInfo", "ttt2_identity_disguiser_update_data", function(tData)
 		local unchangedEnt = tData:GetUnchangedEntity()
 		local ent = tData:GetEntity()
-		local disguiserTarget = unchangedEnt:GetDisguiserTarget()
+		local realEnt = IsValid(unchangedEnt) and unchangedEnt or ent
 
 		-- has to be a player
-		if not IsPlayer(ent) then return end
+		if not IsPlayer(ent) or not IsPlayer(realEnt) then return end
 
-		if not IsValid(unchangedEnt) or not IsPlayer(unchangedEnt) then return end
+		local disguiserTarget = realEnt:GetDisguiserTarget()
 
 		-- the real identity is shown to players on the same (non-innocent) team, and to spectators
 		-- in this case, tell the viewer who the user is disguising as
-		if unchangedEnt:HasDisguiserTarget() and CanSeeRealIdentity(ent) then
+		if realEnt:HasDisguiserTarget() and IsValid(disguiserTarget) and CanSeeRealIdentity(realEnt) then
 			tData:AddDescriptionLine(
-				LANG.GetParamTranslation("identity_disguiser_targetid_teammate", disguiserTarget:Nick()),
+				LANG.GetParamTranslation("identity_disguiser_targetid_teammate", {
+					name = disguiserTarget:Nick()
+				}),
 				COLOR_ORANGE
 			)
+		end
 
 		if disguiserTarget ~= ent then return end
 
 		-- add title and subtitle to the focused ent
-		local h_string, h_color = util.HealthToString(unchangedEnt:Health(), unchangedEnt:GetMaxHealth())
+		local h_string, h_color = util.HealthToString(realEnt:Health(), realEnt:GetMaxHealth())
 
 		tData:SetSubtitle(
 			LANG.TryTranslation(h_string),
